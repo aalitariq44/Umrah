@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myplace/features/chat/screens/messages_screen.dart';
 import 'package:myplace/features/location/screens/location_screen.dart';
 import 'package:myplace/features/safety/screens/safety_tab.dart';
 
@@ -14,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const List<Widget> _widgetOptions = <Widget>[
     Center(child: Text('الحساب')), // Placeholder for Account Screen
-    Center(child: Text('الرسائل')), // Placeholder for Chat Screen
+    MessagesScreen(),
     LocationScreen(),
     SafetyTab(),
   ];
