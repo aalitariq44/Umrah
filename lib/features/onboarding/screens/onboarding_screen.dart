@@ -25,6 +25,15 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
     super.dispose();
   }
 
+  void _navigateToLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  }
+
   final List<OnBoard> _onBoardData = [
     OnBoard(
       icon: Icons.people,
@@ -57,14 +66,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: () {
-                    // Navigator.pushReplacement(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => const LoginScreen(),
-                    //   ),
-                    // );
-                  },
+                  onPressed: _navigateToLogin,
                   child: const Text(
                     'تخطي',
                     style: TextStyle(
@@ -112,12 +114,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                             curve: Curves.ease,
                           );
                         } else {
-                          // Navigator.pushReplacement(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (context) => const LoginScreen(),
-                          //   ),
-                          // );
+                          _navigateToLogin();
                         }
                       },
                       style: ElevatedButton.styleFrom(
