@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/core/widgets/custom_button.dart';
-import 'package:myplace/features/auth/screens/create_new_password_screen.dart';
-import 'package:myplace/features/auth/screens/forgot_password_screen.dart';
-import 'package:myplace/features/auth/screens/signup_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('إنشاء حساب جديد'),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -33,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'تسجيل دخول',
+                'إنشاء حساب',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
@@ -42,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'مرحباً بعودتك! الرجاء إدخال التفاصيل الخاصة بك',
+                'الرجاء إدخال التفاصيل لإنشاء حسابك',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -53,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
-                  labelText: 'البريد الالكتروني او رقم الهاتف',
+                  labelText: 'البريد الالكتروني',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -66,47 +68,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('نسيت كلمة المرور؟'),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'تأكيد كلمة المرور',
+                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 20),
               CustomButton(
-                text: 'تسجيل دخول',
+                text: 'إنشاء حساب',
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreateNewPasswordScreen(),
-                    ),
-                  );
+                  // TODO: Implement sign up logic
                 },
-              ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.center,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignUpScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('ليس لديك حساب؟ إنشاء حساب جديد'),
-                ),
               ),
             ],
           ),
