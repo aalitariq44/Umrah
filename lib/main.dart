@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/features/onboarding/screens/onboarding_screen.dart';
+import 'package:myplace/features/2_main_navigation/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
