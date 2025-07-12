@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myplace/features/2_main_navigation/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,26 +14,13 @@ class MyApp extends StatelessWidget {
       title: 'تطبيق مكاني',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Cairo', // Example font, you might need to add it to pubspec.yaml
       ),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تطبيق مكاني'),
+      home: const Directionality(
+        textDirection: TextDirection.rtl,
+        child: HomeScreen(),
       ),
-      body: const Center(
-        child: Text(
-          'تطبيق مكاني',
-        ),
-      ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
