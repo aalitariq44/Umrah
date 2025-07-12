@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:myplace/features/2_main_navigation/home_screen.dart';
+import 'package:myplace/features/onboarding/screens/onboarding_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const Directionality(
         textDirection: TextDirection.rtl,
-        child: HomeScreen(),
+        child: OnBoardingScreen(),
       ),
       debugShowCheckedModeBanner: false,
     );
