@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/core/widgets/custom_button.dart';
-import 'package:myplace/features/2_main_navigation/home_screen.dart';
+import 'package:myplace/features/main_navigation/home_screen.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});
