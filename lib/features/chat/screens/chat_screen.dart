@@ -56,7 +56,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   controller: _scrollController,
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    var message = snapshot.data!.docs[index];
+                    // Since the list is reversed, we need to access the documents in reverse order.
+                    final docIndex = snapshot.data!.docs.length - 1 - index;
+                    var message = snapshot.data!.docs[docIndex];
                     bool isMe = message['senderId'] == currentUserId;
                     return _buildMessageBubble(context, message['text'], isMe);
                   },
