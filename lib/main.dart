@@ -60,14 +60,27 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
         if (snapshot.hasData) {
-          return const HomeScreen();
+          // User is logged in, now check if user data is loaded
+          return FutureBuilder(
+            future: Provider.of<AuthController>(context, listen: false)
+                .loadCurrentUser(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              // After loading, AuthController will have the user details.
+              // The HomeScreen can now safely access it.
+              return const HomeScreen();
+            },
+          );
         }
+        // User is not logged in
         return const LoginScreen();
       },
     );

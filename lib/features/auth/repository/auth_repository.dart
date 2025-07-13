@@ -25,6 +25,27 @@ class AuthRepository {
     }
   }
 
+  Future<UserCredential> signUpWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      // After creating the user, create a new document for the user in the 'users' collection
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'email': email,
+        'name': '',
+        'phone': '',
+      });
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message);
+    }
+  }
+
   Future<model.User> getUserDetails() async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {

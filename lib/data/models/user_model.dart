@@ -21,7 +21,11 @@ class User {
       };
 
   static User fromSnap(DocumentSnapshot snap) {
-    var snapshot = snap.data() as Map<String, dynamic>;
+    final data = snap.data();
+    if (data is! Map<String, dynamic>) {
+      throw Exception('User data is not a map!');
+    }
+    final snapshot = data;
     return User(
       uid: snapshot['uid'] ?? '',
       email: snapshot['email'] ?? '',

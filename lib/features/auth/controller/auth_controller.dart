@@ -31,6 +31,16 @@ class AuthController with ChangeNotifier {
     }
   }
 
+  Future<void> signUp(String email, String password) async {
+    try {
+      await _authRepository.signUpWithEmailAndPassword(email, password);
+      _user = await _authRepository.getUserDetails();
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await _authRepository.signOut();
     _user = null;

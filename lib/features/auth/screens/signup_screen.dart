@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/core/widgets/custom_button.dart';
+import 'package:myplace/features/auth/controller/auth_controller.dart';
+import 'package:myplace/features/main_navigation/home_screen.dart';
+import 'package:provider/provider.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -11,7 +14,9 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -19,6 +24,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _signUp() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('كلمة المرور غير متطابقة'),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      await Provider.of<AuthController>(context, listen: false).signUp(
+        _emailController.text,
+        _passwordController.text,
+      );
+      // The AuthWrapper will handle navigation
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -78,12 +118,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              CustomButton(
-                text: 'إنشاء حساب',
-                onPressed: () {
-                  // TODO: Implement sign up logic
-                },
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : CustomButton(
+                      text: 'إنشاء حساب',
+                      onPressed: _signUp,
+                    ),
             ],
           ),
         ),
