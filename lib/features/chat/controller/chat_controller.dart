@@ -15,4 +15,8 @@ class ChatController with ChangeNotifier {
   Stream<QuerySnapshot> getMessages(String receiverId) {
     return _chatRepository.getMessages(receiverId);
   }
+
+  Future<void> markAsRead(String messageId, String receiverId) async {
+    await _chatRepository.markAsRead(messageId, receiverId);
+  }
 }

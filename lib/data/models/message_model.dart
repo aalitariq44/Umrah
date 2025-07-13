@@ -5,12 +5,14 @@ class Message {
   final String receiverId;
   final String text;
   final Timestamp timestamp;
+  final bool isRead;
 
   Message({
     required this.senderId,
     required this.receiverId,
     required this.text,
     required this.timestamp,
+    this.isRead = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -19,6 +21,17 @@ class Message {
       'receiverId': receiverId,
       'text': text,
       'timestamp': timestamp,
+      'isRead': isRead,
     };
+  }
+
+  factory Message.fromMap(Map<String, dynamic> map) {
+    return Message(
+      senderId: map['senderId'],
+      receiverId: map['receiverId'],
+      text: map['text'],
+      timestamp: map['timestamp'],
+      isRead: map['isRead'] ?? false,
+    );
   }
 }

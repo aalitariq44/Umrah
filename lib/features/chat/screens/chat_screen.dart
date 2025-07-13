@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/chat/controller/chat_controller.dart';
 import 'package:provider/provider.dart';
@@ -48,19 +49,31 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  if (_scrollController.hasClients) {
+                    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  }
                 });
 
                 return ListView.builder(
-                  reverse: true,
                   controller: _scrollController,
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    // Since the list is reversed, we need to access the documents in reverse order.
-                    final docIndex = snapshot.data!.docs.length - 1 - index;
-                    var message = snapshot.data!.docs[docIndex];
-                    bool isMe = message['senderId'] == currentUserId;
-                    return _buildMessageBubble(context, message['text'], isMe);
+                    var messageDoc = snapshot.data!.docs[index];
+                    var messageData = messageDoc.data() as Map<String, dynamic>;
+
+                    // Mark message as read
+                    if (messageData['receiverId'] == currentUserId && !messageData['isRead']) {
+                      chatController.markAsRead(messageDoc.id, widget.friend.uid);
+                    }
+
+                    bool isMe = messageData['senderId'] == currentUserId;
+                    return _buildMessageBubble(
+                      context,
+                      messageData['text'],
+                      messageData['timestamp'],
+                      isMe,
+                      messageData['isRead'],
+                    );
                   },
                 );
               },
@@ -72,7 +85,9 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, String text, bool isMe) {
+  Widget _buildMessageBubble(
+      BuildContext context, String text, Timestamp timestamp, bool isMe, bool isRead) {
+    final time = DateFormat('hh:mm a').format(timestamp.toDate());
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
@@ -85,7 +100,27 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(12),
-            child: Text(text),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(text),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(time, style: const TextStyle(fontSize: 10)),
+                    if (isMe) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.done_all,
+                        size: 16,
+                        color: isRead ? Colors.blue : Colors.grey,
+                      ),
+                    ]
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -47,4 +47,18 @@ class ChatRepository {
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
+
+  Future<void> markAsRead(String messageId, String receiverId) async {
+    final String currentUserId = _auth.currentUser!.uid;
+    List<String> ids = [currentUserId, receiverId];
+    ids.sort();
+    String chatRoomId = ids.join('_');
+
+    await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'isRead': true});
+  }
 }
