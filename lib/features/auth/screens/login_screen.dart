@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/core/widgets/custom_button.dart';
-import 'package:myplace/features/auth/screens/create_new_password_screen.dart';
+import 'package:myplace/features/auth/controller/auth_controller.dart';
 import 'package:myplace/features/auth/screens/forgot_password_screen.dart';
 import 'package:myplace/features/auth/screens/signup_screen.dart';
+import 'package:myplace/features/main_navigation/home_screen.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,12 +16,38 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _login() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      await Provider.of<AuthController>(context, listen: false).signIn(
+        _emailController.text,
+        _passwordController.text,
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -82,17 +110,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              CustomButton(
-                text: 'تسجيل دخول',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreateNewPasswordScreen(),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : CustomButton(
+                      text: 'تسجيل دخول',
+                      onPressed: _login,
                     ),
-                  );
-                },
-              ),
               const SizedBox(height: 20),
               Align(
                 alignment: Alignment.center,
