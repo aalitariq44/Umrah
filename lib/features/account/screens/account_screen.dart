@@ -23,9 +23,16 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
-    final authController = Provider.of<AuthController>(context, listen: false);
-    _nameController.text = authController.user?.name ?? '';
-    _phoneController.text = authController.user?.phone ?? '';
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authController = Provider.of<AuthController>(context, listen: false);
+      if (authController.user == null) {
+        await authController.loadCurrentUser();
+      }
+      if (mounted) {
+        _nameController.text = authController.user?.name ?? '';
+        _phoneController.text = authController.user?.phone ?? '';
+      }
+    });
   }
 
   @override

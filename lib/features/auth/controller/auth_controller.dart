@@ -11,6 +11,16 @@ class AuthController with ChangeNotifier {
 
   model.User? get user => _user;
 
+  Future<void> loadCurrentUser() async {
+    try {
+      _user = await _authRepository.getUserDetails();
+      notifyListeners();
+    } catch (e) {
+      // Handle exceptions, e.g., user not found or network error
+      print('Error loading current user: $e');
+    }
+  }
+
   Future<void> signIn(String email, String password) async {
     try {
       await _authRepository.signInWithEmailAndPassword(email, password);
