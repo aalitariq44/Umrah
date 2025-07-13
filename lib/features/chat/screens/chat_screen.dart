@@ -38,6 +38,20 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.friend.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.videocam),
+            onPressed: () {
+              // TODO: Implement video call functionality
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.call),
+            onPressed: () {
+              // TODO: Implement voice call functionality
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
