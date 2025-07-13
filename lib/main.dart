@@ -9,6 +9,7 @@ import 'package:myplace/features/auth/screens/login_screen.dart';
 import 'package:myplace/features/main_navigation/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myplace/core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,10 +31,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'تطبيق مكاني',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          fontFamily: 'Cairo',
-        ),
+        theme: AppTheme.lightTheme,
         localizationsDelegates: [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
