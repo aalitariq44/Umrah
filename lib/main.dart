@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:myplace/features/auth/controller/auth_controller.dart';
+import 'package:myplace/features/chat/controller/chat_controller.dart';
 import 'package:myplace/features/auth/screens/login_screen.dart';
 import 'package:myplace/features/main_navigation/home_screen.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => ChatController()),
       ],
       child: MaterialApp(
         title: 'تطبيق مكاني',

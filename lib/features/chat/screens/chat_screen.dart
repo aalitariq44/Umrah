@@ -1,80 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:myplace/features/chat/screens/call_screen.dart';
+import 'package:myplace/data/models/user_model.dart' as model;
+import 'package:myplace/features/chat/controller/chat_controller.dart';
+import 'package:provider/provider.dart';
 
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+class ChatScreen extends StatefulWidget {
+  final model.User friend;
+  const ChatScreen({super.key, required this.friend});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  void _sendMessage() {
+    if (_messageController.text.isNotEmpty) {
+      final chatController = Provider.of<ChatController>(context, listen: false);
+      chatController.sendMessage(widget.friend.uid, _messageController.text);
+      _messageController.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final chatController = Provider.of<ChatController>(context);
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.more_vert),
-          onPressed: () {},
-        ),
-        title: const Text('رسالة'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60.0),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 20,
-                  // backgroundImage: ...
-                ),
-                const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('لعبة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('3 أعضاء', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.call_outlined),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CallScreen()),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.videocam_outlined),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CallScreen()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
+        title: Text(widget.friend.name),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                _buildMessageBubble(context, 'مرحباً!', '1:10', true),
-                _buildMessageBubble(context, 'رائع، شكراً لإعلامي! أتطلع حقاً إلى تجربته قريباً.', '1:11', true),
-                _buildMessageBubble(context, 'هل يصلح هذا التحديث الخطأ ٣٥٢ لشخصية المهندس؟', '1:11', false, name: 'ديفيد واين'),
-                _buildMessageBubble(context, 'أوه! لقد أصلحوه وقاموا بتعزيز الأمان بشكل أكبر. 🚀', '1:14', false, name: 'إدوارد ديفيدسون'),
-                _buildMessageBubble(context, 'رائع! 😊', '1:20', true),
-              ],
+            child: StreamBuilder<QuerySnapshot>(
+              stream: chatController.getMessages(widget.friend.uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('لا توجد رسائل بعد'));
+                }
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var message = snapshot.data!.docs[index];
+                    bool isMe = message['senderId'] == currentUserId;
+                    return _buildMessageBubble(context, message['text'], isMe);
+                  },
+                );
+              },
             ),
           ),
           _buildMessageComposer(),
@@ -83,48 +69,20 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, String text, String time, bool isMe, {String? name}) {
+  Widget _buildMessageBubble(BuildContext context, String text, bool isMe) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (name != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 48.0, bottom: 4.0),
-              child: Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Container(
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+            decoration: BoxDecoration(
+              color: isMe ? Colors.orange[300] : Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
             ),
-          Row(
-            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              if (!isMe) const CircleAvatar(radius: 15 /*backgroundImage: ...*/),
-              const SizedBox(width: 8),
-              Container(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                decoration: BoxDecoration(
-                  color: isMe ? Colors.orange[300] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(text),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(time, style: const TextStyle(fontSize: 10)),
-                        if (isMe) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.check, size: 12),
-                        ]
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            padding: const EdgeInsets.all(12),
+            child: Text(text),
           ),
         ],
       ),
@@ -137,32 +95,20 @@ class ChatScreen extends StatelessWidget {
       color: Colors.white,
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.mic),
-            onPressed: () {},
-          ),
           Expanded(
             child: TextField(
+              controller: _messageController,
               decoration: InputDecoration(
                 hintText: 'اكتب رسالة...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.attach_file),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _sendMessage,
           ),
         ],
       ),

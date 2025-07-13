@@ -96,7 +96,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     itemBuilder: (context, index) {
                       final friend = authController.friends[index];
                       return _buildMessageTile(
-                          context, friend.name, friend.phone, '...', false);
+                          context, friend, friend.phone, '...', false);
                     },
                   ),
           ),
@@ -106,13 +106,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Widget _buildMessageTile(
-      BuildContext context, String name, String message, String time, bool unread) {
+      BuildContext context, model.User friend, String message, String time, bool unread) {
     return ListTile(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ChatScreen(),
+            builder: (context) => ChatScreen(friend: friend),
           ),
         );
       },
@@ -120,7 +120,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         radius: 30,
         child: Icon(Icons.person),
       ),
-      title: Text(name),
+      title: Text(friend.name),
       subtitle: Text(message),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
