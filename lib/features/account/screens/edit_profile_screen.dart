@@ -10,14 +10,6 @@ class EditProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('تعديل بياناتك الشخصيه'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

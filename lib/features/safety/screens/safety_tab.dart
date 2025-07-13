@@ -1,45 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:myplace/features/auth/controller/auth_controller.dart';
 import 'package:myplace/features/safety/screens/edit_emergency_contacts_screen.dart';
 import 'package:myplace/features/safety/screens/sos_dialog.dart';
+import 'package:provider/provider.dart';
 
 class SafetyTab extends StatelessWidget {
   const SafetyTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer<AuthController>(
+      builder: (context, authController, child) {
+        final user = authController.user;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text(
-                      'أهلاً بعودتك 👋',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                    const CircleAvatar(
+                      radius: 30,
+                      child: Icon(Icons.person),
                     ),
-                    const Text(
-                      'أحمد ابراهيم',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'أهلاً بعودتك 👋',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          user?.name ?? 'مستخدم جديد',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const CircleAvatar(
-                  radius: 30,
-                  // backgroundImage: AssetImage('assets/profile.png'), // Add your profile image here
-                ),
-              ],
-            ),
             const Spacer(),
             SizedBox(
               width: 250,
@@ -120,6 +126,8 @@ class SafetyTab extends StatelessWidget {
           ],
         ),
       ),
+    );
+    },
     );
   }
 }
