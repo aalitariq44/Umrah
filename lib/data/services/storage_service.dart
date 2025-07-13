@@ -9,10 +9,10 @@ class StorageService {
   Future<String?> uploadFile(String path, File file) async {
     try {
       final ref = _storage.ref(path).child(const Uuid().v4());
-      // Pass empty metadata to fix the NullPointerException on Android
-      await ref.putFile(file, SettableMetadata());
+      await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
+      print('File Upload Error: $e');
       return null;
     }
   }

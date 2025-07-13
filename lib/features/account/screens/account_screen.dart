@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:myplace/features/account/screens/contact_us_screen.dart';
 import 'package:myplace/features/account/screens/edit_profile_screen.dart';
 import 'package:myplace/features/account/screens/language_selection_sheet.dart';
@@ -71,6 +74,17 @@ class _AccountScreenState extends State<AccountScreen> {
         );
       },
     );
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+      await Provider.of<AuthController>(context, listen: false)
+          .updateUserProfileImage(imageFile);
+    }
   }
 
   void _showEditPhoneDialog(BuildContext context) {
@@ -158,7 +172,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         backgroundColor: Colors.orange,
                         child: IconButton(
                           icon: const Icon(Icons.edit, color: Colors.white),
-                          onPressed: () {},
+                          onPressed: _pickImage,
                         ),
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/auth/repository/auth_repository.dart';
@@ -61,6 +63,12 @@ class AuthController with ChangeNotifier {
 
   Future<void> updateUserPhone(String phone) async {
     await _authRepository.updateUserPhone(phone);
+    _user = await _authRepository.getUserDetails();
+    notifyListeners();
+  }
+
+  Future<void> updateUserProfileImage(File imageFile) async {
+    await _authRepository.updateUserProfileImage(imageFile);
     _user = await _authRepository.getUserDetails();
     notifyListeners();
   }

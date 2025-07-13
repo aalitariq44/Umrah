@@ -1,17 +1,23 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 
 class AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
 
   AuthRepository({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? FirebaseStorage.instance;
 
   Future<UserCredential> signInWithEmailAndPassword(
       String email, String password) async {
@@ -87,6 +93,24 @@ class AuthRepository {
           .collection('users')
           .doc(currentUser.uid)
           .set({'phone': phone}, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> updateUserProfileImage(File imageFile) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      // Upload image to a user-specific path
+      final ref = _storage.ref('profile_images/${currentUser.uid}');
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+
+      // Update user's photoUrl in Firestore
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .set({'photoUrl': downloadUrl}, SetOptions(merge: true));
+    } else {
+      throw Exception("User not logged in");
     }
   }
 
