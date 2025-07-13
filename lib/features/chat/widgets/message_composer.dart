@@ -102,79 +102,111 @@ class _MessageComposerState extends State<MessageComposer> {
       context: context,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo),
-                title: const Text('Gallery'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    widget.onSendImage(File(pickedFile.path));
-                  }
-                },
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: GridView(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
               ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) {
-                    widget.onSendImage(File(pickedFile.path));
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.contacts),
-                title: const Text('Contact'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  if (await FlutterContacts.requestPermission()) {
-                    final contact = await FlutterContacts.openExternalPick();
-                    if (contact != null) {
-                      widget.onSendContact(contact);
+              children: [
+                _buildAttachmentMenuItem(
+                  icon: Icons.camera_alt,
+                  label: 'كاميرا',
+                  color: Colors.red,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                    if (pickedFile != null) {
+                      widget.onSendImage(File(pickedFile.path));
                     }
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.insert_drive_file),
-                title: const Text('Document'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final result = await FilePicker.platform.pickFiles(type: FileType.any);
-                  if (result != null) {
-                    widget.onSendDocument(File(result.files.single.path!));
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.audiotrack),
-                title: const Text('Audio'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-                  if (result != null) {
-                    widget.onSendAudio(File(result.files.single.path!));
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.location_on),
-                title: const Text('Location'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final position = await _determinePosition();
-                  widget.onSendLocation(position);
-                },
-              ),
-            ],
+                  },
+                ),
+                _buildAttachmentMenuItem(
+                  icon: Icons.mic,
+                  label: 'تسجيل',
+                  color: Colors.lightBlue,
+                  onTap: () async {
+                     Navigator.pop(context);
+                     final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+                     if (result != null) {
+                       widget.onSendAudio(File(result.files.single.path!));
+                     }
+                  },
+                ),
+                _buildAttachmentMenuItem(
+                  icon: Icons.person,
+                  label: 'جهة الاتصال',
+                  color: Colors.blue,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    if (await FlutterContacts.requestPermission()) {
+                      final contact = await FlutterContacts.openExternalPick();
+                      if (contact != null) {
+                        widget.onSendContact(contact);
+                      }
+                    }
+                  },
+                ),
+                _buildAttachmentMenuItem(
+                  icon: Icons.photo_library,
+                  label: 'معرض الصور',
+                  color: Colors.yellow[700]!,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                    if (pickedFile != null) {
+                      widget.onSendImage(File(pickedFile.path));
+                    }
+                  },
+                ),
+                _buildAttachmentMenuItem(
+                  icon: Icons.location_on,
+                  label: 'موقعي',
+                  color: Colors.cyan,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final position = await _determinePosition();
+                    widget.onSendLocation(position);
+                  },
+                ),
+                _buildAttachmentMenuItem(
+                  icon: Icons.insert_drive_file,
+                  label: 'مستند',
+                  color: Colors.green,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final result = await FilePicker.platform.pickFiles(type: FileType.any);
+                    if (result != null) {
+                      widget.onSendDocument(File(result.files.single.path!));
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAttachmentMenuItem({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: color,
+            child: Icon(icon, color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(label),
+        ],
+      ),
     );
   }
 
