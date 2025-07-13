@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
@@ -9,11 +12,19 @@ import 'package:uuid/uuid.dart';
 class MessageComposer extends StatefulWidget {
   final Function(String) onSendMessage;
   final Function(File, int) onSendVoiceMessage;
+  final Function(Contact) onSendContact;
+  final Function(File) onSendImage;
+  final Function(File) onSendDocument;
+  final Function(File) onSendAudio;
 
   const MessageComposer({
     super.key,
     required this.onSendMessage,
     required this.onSendVoiceMessage,
+    required this.onSendContact,
+    required this.onSendImage,
+    required this.onSendDocument,
+    required this.onSendAudio,
   });
 
   @override
@@ -83,6 +94,78 @@ class _MessageComposerState extends State<MessageComposer> {
     }
   }
 
+  void _showAttachmentMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) {
+                    widget.onSendImage(File(pickedFile.path));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedFile != null) {
+                    widget.onSendImage(File(pickedFile.path));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.contacts),
+                title: const Text('Contact'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (await FlutterContacts.requestPermission()) {
+                    final contact = await FlutterContacts.openExternalPick();
+                    if (contact != null) {
+                      widget.onSendContact(contact);
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file),
+                title: const Text('Document'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+                  if (result != null) {
+                    widget.onSendDocument(File(result.files.single.path!));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.audiotrack),
+                title: const Text('Audio'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+                  if (result != null) {
+                    widget.onSendAudio(File(result.files.single.path!));
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -106,6 +189,10 @@ class _MessageComposerState extends State<MessageComposer> {
           IconButton(
             icon: Icon(_isRecording ? Icons.stop : Icons.mic),
             onPressed: _isRecording ? _stopRecording : _startRecording,
+          ),
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            onPressed: _showAttachmentMenu,
           ),
           IconButton(
             icon: const Icon(Icons.send),

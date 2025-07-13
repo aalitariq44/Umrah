@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/chat/controller/chat_controller.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:myplace/features/chat/widgets/message_composer.dart';
 import 'package:provider/provider.dart';
 
@@ -87,6 +88,22 @@ class _ChatScreenState extends State<ChatScreen> {
               final chatController = Provider.of<ChatController>(context, listen: false);
               chatController.sendVoiceMessage(widget.friend.uid, file, duration);
             },
+            onSendContact: (contact) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendContactMessage(widget.friend.uid, contact);
+            },
+            onSendImage: (file) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendImageMessage(widget.friend.uid, file);
+            },
+            onSendDocument: (file) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendDocumentMessage(widget.friend.uid, file);
+            },
+            onSendAudio: (file) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendAudioMessage(widget.friend.uid, file);
+            },
           ),
         ],
       ),
@@ -115,6 +132,36 @@ class _ChatScreenState extends State<ChatScreen> {
             },
           ),
           Text(durationString),
+        ],
+      );
+    } else if (type == 'contact') {
+      messageContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(messageData['contactName'] ?? 'Unknown Contact', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(messageData['contactNumber'] ?? ''),
+        ],
+      );
+    } else if (type == 'image') {
+      messageContent = Image.network(messageData['imageUrl']);
+    } else if (type == 'document') {
+      messageContent = Row(
+        children: [
+          const Icon(Icons.insert_drive_file),
+          const SizedBox(width: 8),
+          Text(messageData['fileName'] ?? 'Document'),
+        ],
+      );
+    } else if (type == 'audio') {
+      messageContent = Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.play_arrow),
+            onPressed: () async {
+              await _audioPlayer.play(UrlSource(messageData['url']));
+            },
+          ),
+          Text(messageData['fileName'] ?? 'Audio'),
         ],
       );
     } else {

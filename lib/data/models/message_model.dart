@@ -9,6 +9,10 @@ class Message {
   final String type;
   final String? url;
   final int? duration;
+  final String? contactName;
+  final String? contactNumber;
+  final String? imageUrl;
+  final String? fileName;
 
   Message({
     required this.senderId,
@@ -19,6 +23,10 @@ class Message {
     this.type = 'text',
     this.url,
     this.duration,
+    this.contactName,
+    this.contactNumber,
+    this.imageUrl,
+    this.fileName,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +39,10 @@ class Message {
       'type': type,
       'url': url,
       'duration': duration,
+      'contactName': contactName,
+      'contactNumber': contactNumber,
+      'imageUrl': imageUrl,
+      'fileName': fileName,
     };
   }
 
@@ -44,6 +56,10 @@ class Message {
       type: map['type'] ?? 'text',
       url: map['url'],
       duration: map['duration'],
+      contactName: map['contactName'],
+      contactNumber: map['contactNumber'],
+      imageUrl: map['imageUrl'],
+      fileName: map['fileName'],
     );
   }
 }
