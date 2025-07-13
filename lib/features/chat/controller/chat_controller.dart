@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:myplace/features/chat/repository/chat_repository.dart';
 
 class ChatController with ChangeNotifier {
@@ -32,6 +33,10 @@ class ChatController with ChangeNotifier {
 
   Future<void> sendAudioMessage(String receiverId, File file) async {
     await _chatRepository.sendAudioMessage(receiverId, file);
+  }
+
+  Future<void> sendLocationMessage(String receiverId, Position position) async {
+    await _chatRepository.sendLocationMessage(receiverId, position);
   }
 
   Stream<QuerySnapshot> getMessages(String receiverId) {

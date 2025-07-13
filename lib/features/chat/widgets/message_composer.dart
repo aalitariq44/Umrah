@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,6 +17,7 @@ class MessageComposer extends StatefulWidget {
   final Function(File) onSendImage;
   final Function(File) onSendDocument;
   final Function(File) onSendAudio;
+  final Function(Position) onSendLocation;
 
   const MessageComposer({
     super.key,
@@ -25,6 +27,7 @@ class MessageComposer extends StatefulWidget {
     required this.onSendImage,
     required this.onSendDocument,
     required this.onSendAudio,
+    required this.onSendLocation,
   });
 
   @override
@@ -159,11 +162,45 @@ class _MessageComposerState extends State<MessageComposer> {
                   }
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.location_on),
+                title: const Text('Location'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final position = await _determinePosition();
+                  widget.onSendLocation(position);
+                },
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition();
   }
 
   @override

@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/chat/controller/chat_controller.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:myplace/features/chat/widgets/message_composer.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatScreen extends StatefulWidget {
   final model.User friend;
@@ -104,6 +106,10 @@ class _ChatScreenState extends State<ChatScreen> {
               final chatController = Provider.of<ChatController>(context, listen: false);
               chatController.sendAudioMessage(widget.friend.uid, file);
             },
+            onSendLocation: (position) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendLocationMessage(widget.friend.uid, position);
+            },
           ),
         ],
       ),
@@ -163,6 +169,28 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Text(messageData['fileName'] ?? 'Audio'),
         ],
+      );
+    } else if (type == 'location') {
+      messageContent = InkWell(
+        onTap: () async {
+          final url = 'https://www.google.com/maps/search/?api=1&query=${messageData['latitude']},${messageData['longitude']}';
+          if (await canLaunchUrl(Uri.parse(url))) {
+            await launchUrl(Uri.parse(url));
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Location', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Image.network(
+              'https://maps.googleapis.com/maps/api/staticmap?center=${messageData['latitude']},${messageData['longitude']}&zoom=15&size=200x200&key=YOUR_API_KEY',
+              width: 200,
+              height: 200,
+              fit: BoxFit.cover,
+            ),
+          ],
+        ),
       );
     } else {
       messageContent = const Text('Unsupported message type');

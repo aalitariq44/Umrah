@@ -13,6 +13,8 @@ class Message {
   final String? contactNumber;
   final String? imageUrl;
   final String? fileName;
+  final double? latitude;
+  final double? longitude;
 
   Message({
     required this.senderId,
@@ -27,6 +29,8 @@ class Message {
     this.contactNumber,
     this.imageUrl,
     this.fileName,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toMap() {
@@ -43,6 +47,8 @@ class Message {
       'contactNumber': contactNumber,
       'imageUrl': imageUrl,
       'fileName': fileName,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -60,6 +66,8 @@ class Message {
       contactNumber: map['contactNumber'],
       imageUrl: map['imageUrl'],
       fileName: map['fileName'],
+      latitude: map['latitude'],
+      longitude: map['longitude'],
     );
   }
 }

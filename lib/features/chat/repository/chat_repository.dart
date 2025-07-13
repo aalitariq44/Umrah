@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:myplace/data/models/message_model.dart';
 import 'package:myplace/data/services/storage_service.dart';
 
@@ -18,7 +19,7 @@ class ChatRepository {
         _auth = auth ?? FirebaseAuth.instance,
         _storageService = storageService ?? StorageService();
 
-  Future<void> sendMessage(String receiverId, String text, String type, {String? url, int? duration, String? contactName, String? contactNumber, String? imageUrl, String? fileName}) async {
+  Future<void> sendMessage(String receiverId, String text, String type, {String? url, int? duration, String? contactName, String? contactNumber, String? imageUrl, String? fileName, double? latitude, double? longitude}) async {
     final String currentUserId = _auth.currentUser!.uid;
     final Timestamp timestamp = Timestamp.now();
 
@@ -34,6 +35,8 @@ class ChatRepository {
       contactNumber: contactNumber,
       imageUrl: imageUrl,
       fileName: fileName,
+      latitude: latitude,
+      longitude: longitude,
     );
 
     List<String> ids = [currentUserId, receiverId];
@@ -79,6 +82,10 @@ class ChatRepository {
     if (url != null) {
       await sendMessage(receiverId, 'Audio', 'audio', url: url, fileName: file.path.split('/').last);
     }
+  }
+
+  Future<void> sendLocationMessage(String receiverId, Position position) async {
+    await sendMessage(receiverId, 'Location', 'location', latitude: position.latitude, longitude: position.longitude);
   }
 
   Stream<QuerySnapshot> getMessages(String receiverId) {
