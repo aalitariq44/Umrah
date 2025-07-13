@@ -128,6 +128,11 @@ class _AccountScreenState extends State<AccountScreen> {
     final authController = Provider.of<AuthController>(context);
     final user = authController.user;
 
+    ImageProvider<Object>? backgroundImage;
+    if (user?.photoUrl != null && user!.photoUrl.isNotEmpty) {
+      backgroundImage = NetworkImage(user.photoUrl);
+    }
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -138,9 +143,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 20),
                 Stack(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 60,
-                      // backgroundImage: NetworkImage('...'),
+                      backgroundImage: backgroundImage,
+                      child: backgroundImage == null
+                          ? const Icon(Icons.person, size: 60)
+                          : null,
                     ),
                     Positioned(
                       bottom: 0,
