@@ -3,21 +3,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:myplace/data/models/message_model.dart';
-import 'package:myplace/data/services/storage_service.dart';
+import 'package:uuid/uuid.dart';
 
 class ChatRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final StorageService _storageService;
+  final FirebaseStorage _storage;
 
   ChatRepository({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-    StorageService? storageService,
+    FirebaseStorage? storage,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance,
-        _storageService = storageService ?? StorageService();
+        _storage = storage ?? FirebaseStorage.instance;
 
   Future<void> sendMessage(String receiverId, String text, String type, {String? url, int? duration, String? contactName, String? contactNumber, String? imageUrl, String? fileName, double? latitude, double? longitude}) async {
     final String currentUserId = _auth.currentUser!.uid;
@@ -51,10 +52,10 @@ class ChatRepository {
   }
 
   Future<void> sendVoiceMessage(String receiverId, File file, int duration) async {
-    final url = await _storageService.uploadFile('voice_messages', file);
-    if (url != null) {
-      await sendMessage(receiverId, 'Voice Message', 'voice', url: url, duration: duration);
-    }
+    final ref = _storage.ref('voice_messages').child(const Uuid().v4());
+    await ref.putFile(file);
+    final url = await ref.getDownloadURL();
+    await sendMessage(receiverId, 'Voice Message', 'voice', url: url, duration: duration);
   }
 
   Future<void> sendContactMessage(String receiverId, Contact contact) async {
@@ -64,24 +65,24 @@ class ChatRepository {
   }
 
   Future<void> sendImageMessage(String receiverId, File file) async {
-    final imageUrl = await _storageService.uploadFile('image_messages', file);
-    if (imageUrl != null) {
-      await sendMessage(receiverId, 'Image', 'image', imageUrl: imageUrl);
-    }
+    final ref = _storage.ref('image_messages').child(const Uuid().v4());
+    await ref.putFile(file);
+    final imageUrl = await ref.getDownloadURL();
+    await sendMessage(receiverId, 'Image', 'image', imageUrl: imageUrl);
   }
 
   Future<void> sendDocumentMessage(String receiverId, File file) async {
-    final url = await _storageService.uploadFile('document_messages', file);
-    if (url != null) {
-      await sendMessage(receiverId, 'Document', 'document', url: url, fileName: file.path.split('/').last);
-    }
+    final ref = _storage.ref('document_messages').child(const Uuid().v4());
+    await ref.putFile(file);
+    final url = await ref.getDownloadURL();
+    await sendMessage(receiverId, 'Document', 'document', url: url, fileName: file.path.split('/').last);
   }
 
   Future<void> sendAudioMessage(String receiverId, File file) async {
-    final url = await _storageService.uploadFile('audio_messages', file);
-    if (url != null) {
-      await sendMessage(receiverId, 'Audio', 'audio', url: url, fileName: file.path.split('/').last);
-    }
+    final ref = _storage.ref('audio_messages').child(const Uuid().v4());
+    await ref.putFile(file);
+    final url = await ref.getDownloadURL();
+    await sendMessage(receiverId, 'Audio', 'audio', url: url, fileName: file.path.split('/').last);
   }
 
   Future<void> sendLocationMessage(String receiverId, Position position) async {
