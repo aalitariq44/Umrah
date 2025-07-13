@@ -76,7 +76,7 @@ class AuthWrapper extends StatelessWidget {
               }
               // After loading, AuthController will have the user details.
               // The HomeScreen can now safely access it.
-              return const HomeScreen();
+              return const HomeScreen(initialIndex: 3);
             },
           );
         }
