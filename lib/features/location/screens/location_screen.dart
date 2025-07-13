@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:myplace/features/auth/repository/auth_repository.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
@@ -11,18 +14,65 @@ class LocationScreen extends StatefulWidget {
 }
 
 class _LocationScreenState extends State<LocationScreen> {
-  static const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(33.3152, 44.3661),
-    zoom: 14.4746,
-  );
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
 
   final AuthRepository _authRepository = AuthRepository();
   late Future<List<model.User>> _friendsFuture;
+  final Set<Marker> _markers = {};
+  Position? _currentPosition;
 
   @override
   void initState() {
     super.initState();
     _friendsFuture = _authRepository.getFriends();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    final position = await Geolocator.getCurrentPosition();
+    setState(() {
+      _currentPosition = position;
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('currentLocation'),
+          position: LatLng(position.latitude, position.longitude),
+          infoWindow: const InfoWindow(title: 'My Location'),
+        ),
+      );
+    });
+    _goToCurrentLocation();
+  }
+
+  Future<void> _goToCurrentLocation() async {
+    if (_currentPosition == null) return;
+    final GoogleMapController controller = await _controller.future;
+    final newPosition = CameraPosition(
+      target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      zoom: 14.4746,
+    );
+    await controller.animateCamera(CameraUpdate.newCameraPosition(newPosition));
   }
 
   @override
@@ -30,8 +80,18 @@ class _LocationScreenState extends State<LocationScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          const GoogleMap(
-            initialCameraPosition: _kGooglePlex,
+          GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(33.3152, 44.3661), // Default location
+              zoom: 14.4746,
+            ),
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+            },
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            markers: _markers,
           ),
           DraggableScrollableSheet(
             initialChildSize: 0.3,
