@@ -88,4 +88,49 @@ class AuthRepository {
           .set({'phone': phone}, SetOptions(merge: true));
     }
   }
+
+  Future<model.User?> searchUserByPhone(String phone) async {
+    final querySnapshot = await _firestore
+        .collection('users')
+        .where('phone', isEqualTo: phone)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      return model.User.fromSnap(querySnapshot.docs.first);
+    }
+    return null;
+  }
+
+  Future<void> addFriend(String friendUid) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null && friendUid.isNotEmpty) {
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('friends')
+          .doc(friendUid)
+          .set({});
+    }
+  }
+
+  Future<List<model.User>> getFriends() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      final friendsSnapshot = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('friends')
+          .get();
+
+      final friendUids = friendsSnapshot.docs.map((doc) => doc.id).toList();
+      final friendFutures = friendUids.map((uid) async {
+        final userDoc = await _firestore.collection('users').doc(uid).get();
+        return model.User.fromSnap(userDoc);
+      }).toList();
+
+      return await Future.wait(friendFutures);
+    }
+    return [];
+  }
 }

@@ -10,10 +10,13 @@ class AuthController with ChangeNotifier {
       : _authRepository = authRepository ?? AuthRepository();
 
   model.User? get user => _user;
+  List<model.User> _friends = [];
+  List<model.User> get friends => _friends;
 
   Future<void> loadCurrentUser() async {
     try {
       _user = await _authRepository.getUserDetails();
+      await getFriends();
       notifyListeners();
     } catch (e) {
       // Handle exceptions, e.g., user not found or network error
@@ -56,6 +59,20 @@ class AuthController with ChangeNotifier {
   Future<void> updateUserPhone(String phone) async {
     await _authRepository.updateUserPhone(phone);
     _user = await _authRepository.getUserDetails();
+    notifyListeners();
+  }
+
+  Future<model.User?> searchUserByPhone(String phone) async {
+    return await _authRepository.searchUserByPhone(phone);
+  }
+
+  Future<void> addFriend(String friendUid) async {
+    await _authRepository.addFriend(friendUid);
+    await getFriends(); // Refresh the friends list
+  }
+
+  Future<void> getFriends() async {
+    _friends = await _authRepository.getFriends();
     notifyListeners();
   }
 }

@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:myplace/data/models/user_model.dart' as model;
+import 'package:myplace/features/auth/controller/auth_controller.dart';
 import 'package:myplace/features/chat/screens/add_friend_screen.dart';
 import 'package:myplace/features/chat/screens/chat_screen.dart';
 import 'package:myplace/features/chat/screens/create_group_screen.dart';
+import 'package:provider/provider.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
   @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Friends are now loaded in AuthController's loadCurrentUser
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authController = Provider.of<AuthController>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('الرسائل'),
@@ -73,23 +89,24 @@ class MessagesScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView(
-              children: [
-                _buildMessageTile(context, 'ايمان ايمن', 'مرحباً، كيف الاحوال', '10:20AM', true),
-                _buildMessageTile(context, 'ايمان ايمن', 'مرحباً، كيف الاحوال', '10:20AM', true),
-                _buildMessageTile(context, 'ايمان ايمن', 'مرحباً، كيف الاحوال', '10:20AM', true),
-                _buildMessageTile(context, 'ايمان ايمن', 'مرحباً، كيف الاحوال', '10:20AM', false),
-                _buildMessageTile(context, 'ايمان ايمن', 'مرحباً، كيف الاحوال', '10:20AM', false),
-                _buildMessageTile(context, 'جروب الالعاب', 'مرحباً، كيف الاحوال', '10:20AM', false),
-              ],
-            ),
+            child: authController.friends.isEmpty
+                ? const Center(child: Text('لا يوجد أصدقاء بعد'))
+                : ListView.builder(
+                    itemCount: authController.friends.length,
+                    itemBuilder: (context, index) {
+                      final friend = authController.friends[index];
+                      return _buildMessageTile(
+                          context, friend.name, friend.phone, '...', false);
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMessageTile(BuildContext context, String name, String message, String time, bool unread) {
+  Widget _buildMessageTile(
+      BuildContext context, String name, String message, String time, bool unread) {
     return ListTile(
       onTap: () {
         Navigator.push(
@@ -101,7 +118,7 @@ class MessagesScreen extends StatelessWidget {
       },
       leading: const CircleAvatar(
         radius: 30,
-        // backgroundImage: AssetImage('...'),
+        child: Icon(Icons.person),
       ),
       title: Text(name),
       subtitle: Text(message),
