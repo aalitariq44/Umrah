@@ -20,4 +20,22 @@ class AuthController with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> signOut() async {
+    await _authRepository.signOut();
+    _user = null;
+    notifyListeners();
+  }
+
+  Future<void> updateUserName(String name) async {
+    await _authRepository.updateUserName(name);
+    _user = await _authRepository.getUserDetails();
+    notifyListeners();
+  }
+
+  Future<void> updateUserPhone(String phone) async {
+    await _authRepository.updateUserPhone(phone);
+    _user = await _authRepository.getUserDetails();
+    notifyListeners();
+  }
 }

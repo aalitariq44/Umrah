@@ -30,8 +30,41 @@ class AuthRepository {
     if (currentUser != null) {
       DocumentSnapshot snap =
           await _firestore.collection('users').doc(currentUser.uid).get();
-      return model.User.fromSnap(snap);
+      if (snap.exists) {
+        return model.User.fromSnap(snap);
+      } else {
+        return model.User(
+          uid: currentUser.uid,
+          email: currentUser.email ?? '',
+          name: '',
+          phone: '',
+        );
+      }
     }
     throw Exception("User not logged in");
+  }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  Future<void> updateUserName(String name) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .set({'name': name}, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> updateUserPhone(String phone) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .set({'phone': phone}, SetOptions(merge: true));
+    }
   }
 }

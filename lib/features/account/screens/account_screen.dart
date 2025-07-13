@@ -3,12 +3,124 @@ import 'package:myplace/features/account/screens/contact_us_screen.dart';
 import 'package:myplace/features/account/screens/edit_profile_screen.dart';
 import 'package:myplace/features/account/screens/language_selection_sheet.dart';
 import 'package:myplace/features/account/screens/legal_page.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:myplace/features/auth/controller/auth_controller.dart';
+import 'package:myplace/features/auth/screens/login_screen.dart';
+import 'package:provider/provider.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
   @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  Country _selectedCountry = Country.parse('IQ');
+
+  @override
+  void initState() {
+    super.initState();
+    final authController = Provider.of<AuthController>(context, listen: false);
+    _nameController.text = authController.user?.name ?? '';
+    _phoneController.text = authController.user?.phone ?? '';
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تعديل الاسم'),
+          content: TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(hintText: 'ادخل اسمك'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('الغاء'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Provider.of<AuthController>(context, listen: false)
+                    .updateUserName(_nameController.text);
+                Navigator.of(context).pop();
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditPhoneDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تعديل رقم الهاتف'),
+          content: TextField(
+            controller: _phoneController,
+            decoration: InputDecoration(
+              hintText: 'ادخل رقم هاتفك',
+              prefixIcon: InkWell(
+                onTap: () {
+                  showCountryPicker(
+                    context: context,
+                    onSelect: (Country country) {
+                      setState(() {
+                        _selectedCountry = country;
+                      });
+                    },
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('${_selectedCountry.flagEmoji} +${_selectedCountry.phoneCode}'),
+                ),
+              ),
+            ),
+            keyboardType: TextInputType.phone,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('الغاء'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Provider.of<AuthController>(context, listen: false)
+                    .updateUserPhone('+${_selectedCountry.phoneCode}${_phoneController.text}');
+                Navigator.of(context).pop();
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authController = Provider.of<AuthController>(context);
+    final user = authController.user;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -38,9 +150,34 @@ class AccountScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'ابراهيم صبحي',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                GestureDetector(
+                  onTap: () => _showEditNameDialog(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        user?.name ?? 'اضف اسمك',
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.edit, size: 20),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () => _showEditPhoneDialog(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        user?.phone ?? 'اضف رقم هاتفك',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.edit, size: 20),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 _buildSectionTitle('حسابي'),
@@ -99,16 +236,19 @@ class AccountScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16.0),
                         ),
-                        title: const Text('هل تريد الخروج من التطبيق؟', textAlign: TextAlign.center),
+                        title: const Text('هل تريد تسجيل الخروج؟', textAlign: TextAlign.center),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
                             child: const Text('لا ، أريد'),
                           ),
                           TextButton(
-                            onPressed: () {
-                              // Handle logout
-                              Navigator.of(context).pop();
+                            onPressed: () async {
+                              await Provider.of<AuthController>(context, listen: false).signOut();
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                (route) => false,
+                              );
                             },
                             child: const Text('نعم', style: TextStyle(color: Colors.red)),
                           ),
