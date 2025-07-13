@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:myplace/features/auth/repository/auth_repository.dart';
+import 'package:myplace/data/models/user_model.dart' as model;
 
-class LocationScreen extends StatelessWidget {
+class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
 
+  @override
+  State<LocationScreen> createState() => _LocationScreenState();
+}
+
+class _LocationScreenState extends State<LocationScreen> {
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(33.3152, 44.3661),
     zoom: 14.4746,
   );
+
+  final AuthRepository _authRepository = AuthRepository();
+  late Future<List<model.User>> _friendsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _friendsFuture = _authRepository.getFriends();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +51,7 @@ class LocationScreen extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Text(
-                        'الأشخاص القريبون',
+                        'موقع الاصدقاء',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -46,15 +62,33 @@ class LocationScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: SizedBox(
                         height: 120, // Adjust height as needed
-                        child: ListView(
-                          controller: scrollController,
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            _buildPersonTile('زينب', '10 كم'),
-                            _buildPersonTile('ساره', '100 كم'),
-                            _buildPersonTile('مريم', '120 كم'),
-                            _buildPersonTile('محمد', '132 كم'),
-                          ],
+                        child: FutureBuilder<List<model.User>>(
+                          future: _friendsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                  child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Center(
+                                  child: Text('No friends found.'));
+                            }
+
+                            final friends = snapshot.data!;
+                            return ListView.builder(
+                              controller: scrollController,
+                              scrollDirection: Axis.horizontal,
+                              itemCount: friends.length,
+                              itemBuilder: (context, index) {
+                                final friend = friends[index];
+                                return _buildPersonTile(friend.name, '... km');
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -75,7 +109,7 @@ class LocationScreen extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 30,
-            // backgroundImage: AssetImage('...'),
+            child: Icon(Icons.person),
           ),
           const SizedBox(height: 8),
           Text(name),
