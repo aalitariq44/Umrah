@@ -108,28 +108,31 @@ class AuthRepository {
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
-          .collection('friends')
-          .doc(friendUid)
-          .set({});
+          .set({
+        'friends': FieldValue.arrayUnion([friendUid])
+      }, SetOptions(merge: true));
     }
   }
 
   Future<List<model.User>> getFriends() async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
-      final friendsSnapshot = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('friends')
-          .get();
-
-      final friendUids = friendsSnapshot.docs.map((doc) => doc.id).toList();
-      final friendFutures = friendUids.map((uid) async {
-        final userDoc = await _firestore.collection('users').doc(uid).get();
-        return model.User.fromSnap(userDoc);
-      }).toList();
-
-      return await Future.wait(friendFutures);
+      final userDoc =
+          await _firestore.collection('users').doc(currentUser.uid).get();
+      final userData = userDoc.data();
+      if (userData != null && userData['friends'] is List) {
+        final friendUids = List<String>.from(userData['friends']);
+        if (friendUids.isEmpty) {
+          return [];
+        }
+        final friendDocs = await _firestore
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: friendUids)
+            .get();
+        return friendDocs.docs
+            .map((doc) => model.User.fromSnap(doc))
+            .toList();
+      }
     }
     return [];
   }

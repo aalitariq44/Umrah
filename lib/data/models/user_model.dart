@@ -27,7 +27,7 @@ class User {
     }
     final snapshot = data;
     return User(
-      uid: snapshot['uid'] ?? '',
+      uid: snap.id,
       email: snapshot['email'] ?? '',
       name: snapshot['name'] ?? '',
       phone: snapshot['phone'] ?? '',
