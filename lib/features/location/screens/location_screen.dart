@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:myplace/features/auth/repository/auth_repository.dart';
@@ -29,6 +31,7 @@ class _LocationScreenState extends State<LocationScreen> {
   void initState() {
     super.initState();
     _friendsFuture = _authRepository.getFriends();
+    _friendsFuture.then((friends) => _updateFriendsOnMap(friends));
     _startLocationTracking();
   }
 
@@ -89,6 +92,127 @@ class _LocationScreenState extends State<LocationScreen> {
     });
   }
 
+  Future<BitmapDescriptor> _createCustomMarkerBitmap(
+      String name, String photoUrl) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final double size = 150; // The size of the marker icon
+    final double imageSize = 100; // The size of the profile image
+    final double textHeight = 50; // The height for the name text
+
+    // Draw background
+    final Paint backgroundPaint = Paint()..color = Colors.white;
+    final RRect backgroundRRect = RRect.fromLTRBR(
+        0, 0, size, size, const Radius.circular(75));
+    canvas.drawRRect(backgroundRRect, backgroundPaint);
+
+    // Draw image or placeholder
+    if (photoUrl.isNotEmpty) {
+      try {
+        final ByteData data =
+            await NetworkAssetBundle(Uri.parse(photoUrl)).load(photoUrl);
+        final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+            targetWidth: imageSize.toInt());
+        final ui.FrameInfo fi = await codec.getNextFrame();
+        
+        final Path clipPath = Path()
+          ..addRRect(RRect.fromLTRBR(
+              (size - imageSize) / 2,
+              (size - imageSize) / 2,
+              size - (size - imageSize) / 2,
+              size - (size - imageSize) / 2,
+              const Radius.circular(50)));
+        canvas.clipPath(clipPath);
+        canvas.drawImage(fi.image, Offset((size - fi.image.width) / 2, (size - fi.image.height) / 2), Paint());
+
+      } catch (e) {
+        // Fallback to placeholder if image fails to load
+        _drawPlaceholder(canvas, name, size, imageSize);
+      }
+    } else {
+      _drawPlaceholder(canvas, name, size, imageSize);
+    }
+
+    // Draw name
+    final ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(
+      ui.ParagraphStyle(
+        textAlign: TextAlign.center,
+        fontSize: 30,
+        fontWeight: FontWeight.bold,
+      ),
+    )
+      ..pushStyle(ui.TextStyle(color: Colors.black))
+      ..addText(name);
+    final ui.Paragraph paragraph = paragraphBuilder.build();
+    paragraph.layout(ui.ParagraphConstraints(width: size));
+    canvas.drawParagraph(
+        paragraph, Offset(0, size - textHeight + 10));
+
+    final ui.Image recordedImage = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
+    final ByteData? byteData =
+        await recordedImage.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+  }
+
+  void _drawPlaceholder(Canvas canvas, String name, double size, double imageSize) {
+    final Paint placeholderPaint = Paint()..color = Colors.purple;
+     canvas.drawCircle(Offset(size / 2, size / 2), imageSize / 2, placeholderPaint);
+
+    final ui.ParagraphBuilder initialBuilder = ui.ParagraphBuilder(
+      ui.ParagraphStyle(
+        textAlign: TextAlign.center,
+        fontSize: 50,
+        fontWeight: FontWeight.bold,
+      ),
+    )
+      ..pushStyle(ui.TextStyle(color: Colors.white))
+      ..addText(name.isNotEmpty ? name[0].toUpperCase() : '');
+    final ui.Paragraph initialParagraph = initialBuilder.build();
+    initialParagraph.layout(ui.ParagraphConstraints(width: imageSize));
+    canvas.drawParagraph(initialParagraph, Offset((size - imageSize) / 2, (size - imageSize) / 2 - 5));
+  }
+
+  void _updateFriendsOnMap(List<model.User> friends) async {
+    final Set<Marker> friendsMarkers = {};
+    final Set<Polyline> friendsPolylines = {};
+
+    for (final friend in friends) {
+      if (friend.locations.isNotEmpty) {
+        final lastLocation = friend.locations.last;
+        final friendPosition =
+            LatLng(lastLocation.latitude, lastLocation.longitude);
+
+        final icon = await _createCustomMarkerBitmap(friend.name, friend.photoUrl);
+
+        friendsMarkers.add(
+          Marker(
+            markerId: MarkerId(friend.uid),
+            position: friendPosition,
+            icon: icon,
+          ),
+        );
+
+        final friendRouteCoords = friend.locations
+            .map((gp) => LatLng(gp.latitude, gp.longitude))
+            .toList();
+
+        friendsPolylines.add(
+          Polyline(
+            polylineId: PolylineId(friend.uid),
+            points: friendRouteCoords,
+            color: Colors.purple,
+            width: 5,
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _markers.addAll(friendsMarkers);
+      _polylines.addAll(friendsPolylines);
+    });
+  }
+
   void _updateMapWithNewPosition(Position position,
       {bool moveCamera = false}) {
     setState(() {
@@ -96,7 +220,8 @@ class _LocationScreenState extends State<LocationScreen> {
       _routeCoords.add(newLatLng);
 
       // Update marker
-      _markers.clear();
+      _markers.removeWhere(
+          (marker) => marker.markerId == const MarkerId('currentLocation'));
       _markers.add(
         Marker(
           markerId: const MarkerId('currentLocation'),
@@ -106,7 +231,8 @@ class _LocationScreenState extends State<LocationScreen> {
       );
 
       // Update polyline
-      _polylines.clear();
+      _polylines
+          .removeWhere((line) => line.polylineId == const PolylineId('route'));
       _polylines.add(
         Polyline(
           polylineId: const PolylineId('route'),

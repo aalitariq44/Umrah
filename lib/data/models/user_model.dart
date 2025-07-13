@@ -5,6 +5,7 @@ class User {
   final String email;
   final String name;
   final String phone;
+  final String photoUrl;
   final List<GeoPoint> locations;
 
   const User({
@@ -12,6 +13,7 @@ class User {
     required this.email,
     required this.name,
     required this.phone,
+    this.photoUrl = '',
     this.locations = const [],
   });
 
@@ -20,6 +22,7 @@ class User {
         'email': email,
         'name': name,
         'phone': phone,
+        'photoUrl': photoUrl,
         'locations': locations,
       };
 
@@ -34,6 +37,7 @@ class User {
       email: snapshot['email'] ?? '',
       name: snapshot['name'] ?? '',
       phone: snapshot['phone'] ?? '',
+      photoUrl: snapshot['photoUrl'] ?? '',
       locations: List<GeoPoint>.from(snapshot['locations'] ?? []),
     );
   }
