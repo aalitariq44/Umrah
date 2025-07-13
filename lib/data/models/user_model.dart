@@ -5,12 +5,14 @@ class User {
   final String email;
   final String name;
   final String phone;
+  final List<GeoPoint> locations;
 
   const User({
     required this.uid,
     required this.email,
     required this.name,
     required this.phone,
+    this.locations = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -18,6 +20,7 @@ class User {
         'email': email,
         'name': name,
         'phone': phone,
+        'locations': locations,
       };
 
   static User fromSnap(DocumentSnapshot snap) {
@@ -31,6 +34,7 @@ class User {
       email: snapshot['email'] ?? '',
       name: snapshot['name'] ?? '',
       phone: snapshot['phone'] ?? '',
+      locations: List<GeoPoint>.from(snapshot['locations'] ?? []),
     );
   }
 }

@@ -20,57 +20,113 @@ class _LocationScreenState extends State<LocationScreen> {
   final AuthRepository _authRepository = AuthRepository();
   late Future<List<model.User>> _friendsFuture;
   final Set<Marker> _markers = {};
-  Position? _currentPosition;
+  final Set<Polyline> _polylines = {};
+  List<LatLng> _routeCoords = [];
+  StreamSubscription<Position>? _positionStreamSubscription;
+  Timer? _locationUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _friendsFuture = _authRepository.getFriends();
-    _getCurrentLocation();
+    _startLocationTracking();
   }
 
-  Future<void> _getCurrentLocation() async {
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    _locationUpdateTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startLocationTracking() async {
     bool serviceEnabled;
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+      // Handle disabled service
+      return;
     }
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
+        // Handle denied permission
+        return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+      // Handle permanently denied permission
+      return;
     }
 
+    // Get initial position
     final position = await Geolocator.getCurrentPosition();
+    _updateMapWithNewPosition(position, moveCamera: true);
+
+    // Start listening to position stream
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // Update when device moves 10 meters
+    );
+
+    _positionStreamSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position? position) {
+      if (position != null) {
+        _updateMapWithNewPosition(position);
+      }
+    });
+
+    // Start timer to upload location every 1 minute
+    _locationUpdateTimer =
+        Timer.periodic(const Duration(minutes: 1), (timer) async {
+      final currentPosition = await Geolocator.getCurrentPosition();
+      await _authRepository.updateUserLocation(currentPosition);
+    });
+  }
+
+  void _updateMapWithNewPosition(Position position,
+      {bool moveCamera = false}) {
     setState(() {
-      _currentPosition = position;
+      final newLatLng = LatLng(position.latitude, position.longitude);
+      _routeCoords.add(newLatLng);
+
+      // Update marker
+      _markers.clear();
       _markers.add(
         Marker(
           markerId: const MarkerId('currentLocation'),
-          position: LatLng(position.latitude, position.longitude),
+          position: newLatLng,
           infoWindow: const InfoWindow(title: 'My Location'),
         ),
       );
+
+      // Update polyline
+      _polylines.clear();
+      _polylines.add(
+        Polyline(
+          polylineId: const PolylineId('route'),
+          points: _routeCoords,
+          color: Colors.blue,
+          width: 5,
+        ),
+      );
     });
-    _goToCurrentLocation();
+
+    if (moveCamera) {
+      _goToCurrentLocation(position);
+    }
   }
 
-  Future<void> _goToCurrentLocation() async {
-    if (_currentPosition == null) return;
+  Future<void> _goToCurrentLocation(Position position) async {
     final GoogleMapController controller = await _controller.future;
     final newPosition = CameraPosition(
-      target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      zoom: 14.4746,
+      target: LatLng(position.latitude, position.longitude),
+      zoom: 16,
     );
     await controller.animateCamera(CameraUpdate.newCameraPosition(newPosition));
   }
@@ -92,6 +148,7 @@ class _LocationScreenState extends State<LocationScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
             markers: _markers,
+            polylines: _polylines,
           ),
           DraggableScrollableSheet(
             initialChildSize: 0.3,

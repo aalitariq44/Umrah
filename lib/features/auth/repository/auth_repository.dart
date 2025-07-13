@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 
 class AuthRepository {
@@ -192,5 +193,16 @@ class AuthRepository {
       }
     }
     return [];
+  }
+
+  Future<void> updateUserLocation(Position position) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'locations': FieldValue.arrayUnion([
+          GeoPoint(position.latitude, position.longitude),
+        ])
+      });
+    }
   }
 }
