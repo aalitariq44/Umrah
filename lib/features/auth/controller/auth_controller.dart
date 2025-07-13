@@ -12,11 +12,14 @@ class AuthController with ChangeNotifier {
   model.User? get user => _user;
   List<model.User> _friends = [];
   List<model.User> get friends => _friends;
+  List<model.User> _friendRequests = [];
+  List<model.User> get friendRequests => _friendRequests;
 
   Future<void> loadCurrentUser() async {
     try {
       _user = await _authRepository.getUserDetails();
       await getFriends();
+      await getFriendRequests();
       notifyListeners();
     } catch (e) {
       // Handle exceptions, e.g., user not found or network error
@@ -66,9 +69,24 @@ class AuthController with ChangeNotifier {
     return await _authRepository.searchUserByPhone(phone);
   }
 
-  Future<void> addFriend(String friendUid) async {
-    await _authRepository.addFriend(friendUid);
-    await getFriends(); // Refresh the friends list
+  Future<void> sendFriendRequest(String receiverId) async {
+    await _authRepository.sendFriendRequest(receiverId);
+  }
+
+  Future<void> acceptFriendRequest(String requesterId) async {
+    await _authRepository.acceptFriendRequest(requesterId);
+    await getFriends();
+    await getFriendRequests();
+  }
+
+  Future<void> declineFriendRequest(String requesterId) async {
+    await _authRepository.declineFriendRequest(requesterId);
+    await getFriendRequests();
+  }
+
+  Future<void> getFriendRequests() async {
+    _friendRequests = await _authRepository.getFriendRequests();
+    notifyListeners();
   }
 
   Future<void> getFriends() async {

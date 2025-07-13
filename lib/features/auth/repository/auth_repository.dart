@@ -102,16 +102,73 @@ class AuthRepository {
     return null;
   }
 
-  Future<void> addFriend(String friendUid) async {
+  Future<void> sendFriendRequest(String receiverId) async {
     User? currentUser = _auth.currentUser;
-    if (currentUser != null && friendUid.isNotEmpty) {
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .set({
-        'friends': FieldValue.arrayUnion([friendUid])
+    if (currentUser != null && receiverId.isNotEmpty) {
+      // Add receiver to sender's sent requests
+      await _firestore.collection('users').doc(currentUser.uid).set({
+        'friend_requests_sent': FieldValue.arrayUnion([receiverId])
+      }, SetOptions(merge: true));
+
+      // Add sender to receiver's received requests
+      await _firestore.collection('users').doc(receiverId).set({
+        'friend_requests_received': FieldValue.arrayUnion([currentUser.uid])
       }, SetOptions(merge: true));
     }
+  }
+
+  Future<void> acceptFriendRequest(String requesterId) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null && requesterId.isNotEmpty) {
+      // Add each other to friends list
+      await _firestore.collection('users').doc(currentUser.uid).set({
+        'friends': FieldValue.arrayUnion([requesterId])
+      }, SetOptions(merge: true));
+      await _firestore.collection('users').doc(requesterId).set({
+        'friends': FieldValue.arrayUnion([currentUser.uid])
+      }, SetOptions(merge: true));
+
+      // Remove from requests lists
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'friend_requests_received': FieldValue.arrayRemove([requesterId])
+      });
+      await _firestore.collection('users').doc(requesterId).update({
+        'friend_requests_sent': FieldValue.arrayRemove([currentUser.uid])
+      });
+    }
+  }
+
+  Future<void> declineFriendRequest(String requesterId) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null && requesterId.isNotEmpty) {
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'friend_requests_received': FieldValue.arrayRemove([requesterId])
+      });
+    }
+  }
+
+  Future<List<model.User>> getFriendRequests() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      final userDoc =
+          await _firestore.collection('users').doc(currentUser.uid).get();
+      final userData = userDoc.data();
+      if (userData != null && userData['friend_requests_received'] is List) {
+        final requesterUids =
+            List<String>.from(userData['friend_requests_received']);
+        if (requesterUids.isEmpty) {
+          return [];
+        }
+        final requesterDocs = await _firestore
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: requesterUids)
+            .get();
+        return requesterDocs.docs
+            .map((doc) => model.User.fromSnap(doc))
+            .toList();
+      }
+    }
+    return [];
   }
 
   Future<List<model.User>> getFriends() async {

@@ -126,11 +126,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   onPressed: () async {
                     if (_searchedUser != null) {
                       final authController = Provider.of<AuthController>(context, listen: false);
-                      await authController.addFriend(_searchedUser!.uid);
+                      await authController.sendFriendRequest(_searchedUser!.uid);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('تم إرسال طلب الصداقة')),
+                      );
                       Navigator.of(context).pop();
                     }
                   },
-                  child: const Text('إضافة'),
+                  child: const Text('إرسال طلب'),
                 ),
               )
             else

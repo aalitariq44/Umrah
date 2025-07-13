@@ -52,6 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 });
 
                 return ListView.builder(
+                  reverse: true,
                   controller: _scrollController,
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
