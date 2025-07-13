@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:myplace/features/chat/repository/chat_repository.dart';
@@ -8,8 +9,12 @@ class ChatController with ChangeNotifier {
   ChatController({ChatRepository? chatRepository})
       : _chatRepository = chatRepository ?? ChatRepository();
 
-  Future<void> sendMessage(String receiverId, String text) async {
-    await _chatRepository.sendMessage(receiverId, text);
+  Future<void> sendMessage(String receiverId, String text, String type) async {
+    await _chatRepository.sendMessage(receiverId, text, type);
+  }
+
+  Future<void> sendVoiceMessage(String receiverId, File file, int duration) async {
+    await _chatRepository.sendVoiceMessage(receiverId, file, duration);
   }
 
   Stream<QuerySnapshot> getMessages(String receiverId) {

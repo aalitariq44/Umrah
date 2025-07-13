@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/chat/controller/chat_controller.dart';
+import 'package:myplace/features/chat/widgets/message_composer.dart';
 import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -15,15 +18,13 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
-  void _sendMessage() {
-    if (_messageController.text.isNotEmpty) {
-      final chatController = Provider.of<ChatController>(context, listen: false);
-      chatController.sendMessage(widget.friend.uid, _messageController.text);
-      _messageController.clear();
-    }
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -69,25 +70,57 @@ class _ChatScreenState extends State<ChatScreen> {
                     bool isMe = messageData['senderId'] == currentUserId;
                     return _buildMessageBubble(
                       context,
-                      messageData['text'],
-                      messageData['timestamp'],
+                      messageData,
                       isMe,
-                      messageData['isRead'],
                     );
                   },
                 );
               },
             ),
           ),
-          _buildMessageComposer(),
+          MessageComposer(
+            onSendMessage: (text) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendMessage(widget.friend.uid, text, 'text');
+            },
+            onSendVoiceMessage: (file, duration) {
+              final chatController = Provider.of<ChatController>(context, listen: false);
+              chatController.sendVoiceMessage(widget.friend.uid, file, duration);
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(
-      BuildContext context, String text, Timestamp timestamp, bool isMe, bool isRead) {
-    final time = DateFormat('hh:mm a').format(timestamp.toDate());
+  Widget _buildMessageBubble(BuildContext context, Map<String, dynamic> messageData, bool isMe) {
+    final time = DateFormat('hh:mm a').format((messageData['timestamp'] as Timestamp).toDate());
+    final type = messageData['type'] ?? 'text';
+
+    Widget messageContent;
+    if (type == 'text') {
+      messageContent = Text(messageData['text']);
+    } else if (type == 'voice') {
+      final duration = messageData['duration'] ?? 0;
+      final minutes = (duration / 60).floor();
+      final seconds = duration % 60;
+      final durationString = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      messageContent = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.play_arrow),
+            onPressed: () async {
+              await _audioPlayer.play(UrlSource(messageData['url']));
+            },
+          ),
+          Text(durationString),
+        ],
+      );
+    } else {
+      messageContent = const Text('Unsupported message type');
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
@@ -103,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(text),
+                messageContent,
                 const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -114,7 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       Icon(
                         Icons.done_all,
                         size: 16,
-                        color: isRead ? Colors.blue : Colors.grey,
+                        color: messageData['isRead'] ? Colors.blue : Colors.grey,
                       ),
                     ]
                   ],
@@ -127,29 +160,4 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageComposer() {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: 'اكتب رسالة...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendMessage,
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -6,6 +6,9 @@ class Message {
   final String text;
   final Timestamp timestamp;
   final bool isRead;
+  final String type;
+  final String? url;
+  final int? duration;
 
   Message({
     required this.senderId,
@@ -13,6 +16,9 @@ class Message {
     required this.text,
     required this.timestamp,
     this.isRead = false,
+    this.type = 'text',
+    this.url,
+    this.duration,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +28,9 @@ class Message {
       'text': text,
       'timestamp': timestamp,
       'isRead': isRead,
+      'type': type,
+      'url': url,
+      'duration': duration,
     };
   }
 
@@ -32,6 +41,9 @@ class Message {
       text: map['text'],
       timestamp: map['timestamp'],
       isRead: map['isRead'] ?? false,
+      type: map['type'] ?? 'text',
+      url: map['url'],
+      duration: map['duration'],
     );
   }
 }
