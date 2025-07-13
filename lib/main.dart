@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:myplace/features/auth/controller/auth_controller.dart';
@@ -21,21 +22,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthController(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthController()),
+      ],
       child: MaterialApp(
         title: 'تطبيق مكاني',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           fontFamily: 'Cairo',
         ),
-        localizationsDelegates: const [
+        localizationsDelegates: [
+          AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
           Locale('ar', ''),
+          Locale('en', ''),
         ],
         locale: const Locale('ar', ''),
         home: const AuthWrapper(),

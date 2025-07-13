@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class LocationScreen extends StatelessWidget {
   const LocationScreen({super.key});
+
+  static const CameraPosition _kGooglePlex = CameraPosition(
+    target: LatLng(33.3152, 44.3661),
+    zoom: 14.4746,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // This will be the map view
-          Container(
-            color: Colors.grey[300],
-            child: const Center(
-              child: Text('Map Placeholder'),
-            ),
+          const GoogleMap(
+            initialCameraPosition: _kGooglePlex,
           ),
           DraggableScrollableSheet(
             initialChildSize: 0.3,
