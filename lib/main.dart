@@ -8,6 +8,7 @@ import 'package:myplace/features/auth/controller/auth_controller.dart';
 import 'package:myplace/features/chat/controller/chat_controller.dart';
 import 'package:myplace/features/auth/screens/login_screen.dart';
 import 'package:myplace/features/main_navigation/home_screen.dart';
+import 'package:myplace/features/call/widgets/call_notification_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:myplace/core/theme/app_theme.dart';
@@ -80,7 +81,9 @@ class AuthWrapper extends StatelessWidget {
               }
               // After loading, AuthController will have the user details.
               // The HomeScreen can now safely access it.
-              return const HomeScreen(initialIndex: 3);
+              return const CallNotificationHandler(
+                child: HomeScreen(initialIndex: 3),
+              );
             },
           );
         }

@@ -9,6 +9,7 @@ import 'package:myplace/features/chat/controller/chat_controller.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:myplace/features/chat/widgets/message_composer.dart';
+import 'package:myplace/features/call/services/call_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -41,14 +42,38 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.videocam),
-            onPressed: () {
-              // TODO: Implement video call functionality
+            onPressed: () async {
+              final currentUser = model.User(
+                uid: currentUserId,
+                email: FirebaseAuth.instance.currentUser!.email ?? '',
+                name: FirebaseAuth.instance.currentUser!.displayName ?? 'أنا',
+                phone: '',
+              );
+              
+              await CallManager.initiateCall(
+                context: context,
+                targetUser: widget.friend,
+                currentUser: currentUser,
+                callType: CallType.video,
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.call),
-            onPressed: () {
-              // TODO: Implement voice call functionality
+            onPressed: () async {
+              final currentUser = model.User(
+                uid: currentUserId,
+                email: FirebaseAuth.instance.currentUser!.email ?? '',
+                name: FirebaseAuth.instance.currentUser!.displayName ?? 'أنا',
+                phone: '',
+              );
+              
+              await CallManager.initiateCall(
+                context: context,
+                targetUser: widget.friend,
+                currentUser: currentUser,
+                callType: CallType.voice,
+              );
             },
           ),
         ],
