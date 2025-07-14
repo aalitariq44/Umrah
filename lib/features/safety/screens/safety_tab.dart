@@ -150,7 +150,16 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const CircleAvatar(radius: 30, child: Icon(Icons.person)),
+                    // تعديل عرض صورة المستخدم أو الأيقونة
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage: (user?.photoUrl != null && user!.photoUrl.isNotEmpty)
+                          ? NetworkImage(user.photoUrl)
+                          : null,
+                      child: (user?.photoUrl == null || user!.photoUrl.isEmpty)
+                          ? const Icon(Icons.person, size: 30)
+                          : null,
+                    ),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
