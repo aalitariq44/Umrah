@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
 import 'package:myplace/features/chat/controller/chat_controller.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:myplace/features/chat/widgets/message_composer.dart';
 import 'package:myplace/features/call/services/call_manager.dart';
 import 'package:myplace/data/models/message_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/clickable_text.dart';
+import '../widgets/document_viewer.dart';
+import 'image_viewer_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final model.User friend;
@@ -161,7 +161,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
     Widget messageContent;
     if (message.type == MessageType.text) {
-      messageContent = Text(message.text);
+      messageContent = ClickableText(
+        text: message.text,
+        style: const TextStyle(fontSize: 16),
+      );
     } else if (message.type == MessageType.voice) {
       final duration = message.duration ?? 0;
       final minutes = (duration / 60).floor();
@@ -186,32 +189,57 @@ class _ChatScreenState extends State<ChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(message.contactName ?? 'Unknown Contact', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(message.contactNumber ?? ''),
+          const SizedBox(height: 4),
+          ClickableText(
+            text: message.contactNumber ?? '',
+            style: const TextStyle(fontSize: 14),
+          ),
         ],
       );
     } else if (message.type == MessageType.image) {
       messageContent = _buildImageMessage(message);
     } else if (message.type == MessageType.document) {
-      messageContent = Row(
-        children: [
-          const Icon(Icons.insert_drive_file),
-          const SizedBox(width: 8),
-          Text(message.fileName ?? 'Document'),
-        ],
+      messageContent = DocumentViewer(
+        fileName: message.fileName,
+        fileUrl: message.url,
       );
     } else if (message.type == MessageType.audio) {
-      messageContent = Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () async {
-              if (message.url != null) {
-                await _audioPlayer.play(UrlSource(message.url!));
-              }
-            },
-          ),
-          Text(message.fileName ?? 'Audio'),
-        ],
+      messageContent = Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[50],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.play_arrow),
+              onPressed: () async {
+                if (message.url != null) {
+                  await _audioPlayer.play(UrlSource(message.url!));
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(message.fileName ?? 'Audio'),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.open_in_new, size: 16),
+              onPressed: () async {
+                if (message.url != null) {
+                  final uri = Uri.parse(message.url!);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                }
+              },
+            ),
+          ],
+        ),
       );
     } else if (message.type == MessageType.location) {
       messageContent = InkWell(
@@ -279,8 +307,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildImageMessage(Message message) {
+    Widget imageWidget;
+    
     if (message.localFile != null) {
-      return Stack(
+      imageWidget = Stack(
         alignment: Alignment.center,
         children: [
           Image.file(
@@ -293,7 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       );
     } else if (message.imageUrl != null) {
-      return Image.network(
+      imageWidget = Image.network(
         message.imageUrl!,
         width: 200,
         height: 200,
@@ -304,11 +334,53 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       );
     } else {
-      return const SizedBox(
+      imageWidget = const SizedBox(
         width: 200,
         height: 200,
         child: Center(child: CircularProgressIndicator()),
       );
     }
+    
+    return GestureDetector(
+      onTap: () async {
+        if (message.imageUrl != null) {
+          // فتح في عارض الصور الداخلي
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ImageViewerScreen(
+                imageUrl: message.imageUrl!,
+                heroTag: message.id,
+              ),
+            ),
+          );
+        }
+      },
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: imageWidget,
+          ),
+          if (message.imageUrl != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: const Icon(
+                  Icons.open_in_new,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
