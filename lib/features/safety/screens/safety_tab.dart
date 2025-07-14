@@ -29,15 +29,11 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _pulseController.repeat(reverse: true);
   }
 
@@ -75,61 +71,63 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
   void _showNoContactsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('لا توجد جهات اتصال'),
-        content: const Text(
-          'لا توجد جهات اتصال للطوارئ محفوظة. يرجى إضافة جهات اتصال للطوارئ أولاً.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('لا توجد جهات اتصال'),
+            content: const Text(
+              'لا توجد جهات اتصال للطوارئ محفوظة. يرجى إضافة جهات اتصال للطوارئ أولاً.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditEmergencyContactsScreen(),
+                    ),
+                  ).then((_) {
+                    _checkEmergencyContacts();
+                  });
+                },
+                child: const Text('إضافة جهات اتصال'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const EditEmergencyContactsScreen(),
-                ),
-              ).then((_) {
-                _checkEmergencyContacts();
-              });
-            },
-            child: const Text('إضافة جهات اتصال'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showConfirmationDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تأكيد الاستغاثة'),
-        content: const Text(
-          'هل أنت متأكد من أنك تريد إرسال استغاثة؟ سيتم الاتصال بجهات الطوارئ خلال 10 ثوانٍ.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showEmergencyAlert();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('تأكيد الاستغاثة'),
+            content: const Text(
+              'هل أنت متأكد من أنك تريد إرسال استغاثة؟ سيتم الاتصال بجهات الطوارئ خلال 10 ثوانٍ.',
             ),
-            child: const Text('نعم، أرسل الاستغاثة'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showEmergencyAlert();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('نعم، أرسل الاستغاثة'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -152,10 +150,7 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      child: Icon(Icons.person),
-                    ),
+                    const CircleAvatar(radius: 30, child: Icon(Icons.person)),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,11 +171,13 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
+                    const Spacer(),
+                    Icon(Icons.notifications, color: Colors.grey, size: 32),
                   ],
                 ),
-                
+
                 const Spacer(),
-                
+
                 // زر الاستغاثة المحدث
                 AnimatedBuilder(
                   animation: _pulseAnimation,
@@ -198,9 +195,10 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                               height: 250,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: _hasEmergencyContacts 
-                                    ? Colors.red.withOpacity(0.2)
-                                    : Colors.grey.withOpacity(0.2),
+                                color:
+                                    _hasEmergencyContacts
+                                        ? Colors.red.withOpacity(0.2)
+                                        : Colors.grey.withOpacity(0.2),
                                 boxShadow: [
                                   if (_hasEmergencyContacts)
                                     BoxShadow(
@@ -212,22 +210,25 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                               ),
                             ),
                             GestureDetector(
-                              onTap: _hasEmergencyContacts 
-                                  ? _showConfirmationDialog 
-                                  : _showNoContactsDialog,
+                              onTap:
+                                  _hasEmergencyContacts
+                                      ? _showConfirmationDialog
+                                      : _showNoContactsDialog,
                               child: Container(
                                 width: 200,
                                 height: 200,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: _hasEmergencyContacts 
-                                      ? Colors.red 
-                                      : Colors.grey,
+                                  color:
+                                      _hasEmergencyContacts
+                                          ? Colors.red
+                                          : Colors.grey,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (_hasEmergencyContacts 
-                                          ? Colors.red 
-                                          : Colors.grey).withOpacity(0.5),
+                                      color: (_hasEmergencyContacts
+                                              ? Colors.red
+                                              : Colors.grey)
+                                          .withOpacity(0.5),
                                       blurRadius: 15,
                                       spreadRadius: 3,
                                     ),
@@ -237,16 +238,16 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      _hasEmergencyContacts 
-                                          ? Icons.emergency 
+                                      _hasEmergencyContacts
+                                          ? Icons.notifications_active
                                           : Icons.warning,
                                       color: Colors.white,
                                       size: 50,
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
-                                      _hasEmergencyContacts 
-                                          ? 'زر الاستغاثة' 
+                                      _hasEmergencyContacts
+                                          ? 'زر الاستغاثة'
                                           : 'لا توجد جهات اتصال',
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -276,16 +277,17 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                     );
                   },
                 ),
-                
+
                 const Spacer(),
-                
+
                 // زر تحرير جهات الاتصال
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EditEmergencyContactsScreen(),
+                        builder:
+                            (context) => const EditEmergencyContactsScreen(),
                       ),
                     ).then((_) {
                       // إعادة فحص جهات الاتصال عند العودة
@@ -299,11 +301,14 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
                   ),
                   child: const Text('تحرير جهات الاتصال للطوارئ'),
                 ),
-                
+
                 const Spacer(),
               ],
             ),
