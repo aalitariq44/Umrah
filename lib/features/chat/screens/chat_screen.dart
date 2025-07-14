@@ -10,6 +10,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:myplace/features/chat/widgets/message_composer.dart';
 import 'package:myplace/features/call/services/call_manager.dart';
+import 'package:myplace/data/models/message_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -102,17 +103,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     var messageDoc = snapshot.data!.docs[index];
-                    var messageData = messageDoc.data() as Map<String, dynamic>;
+                    var message = Message.fromMap(messageDoc.data() as Map<String, dynamic>);
 
                     // Mark message as read
-                    if (messageData['receiverId'] == currentUserId && !messageData['isRead']) {
-                      chatController.markAsRead(messageDoc.id, widget.friend.uid);
+                    if (message.receiverId == currentUserId && message.status != MessageStatus.read) {
+                      chatController.markAsRead(message.id, widget.friend.uid);
                     }
 
-                    bool isMe = messageData['senderId'] == currentUserId;
+                    bool isMe = message.senderId == currentUserId;
                     return _buildMessageBubble(
                       context,
-                      messageData,
+                      message,
                       isMe,
                     );
                   },
@@ -122,20 +123,20 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           MessageComposer(
             onSendMessage: (text) {
-              final chatController = Provider.of<ChatController>(context, listen: false);
-              chatController.sendMessage(widget.friend.uid, text, 'text');
+              Provider.of<ChatController>(context, listen: false)
+                  .sendTextMessage(widget.friend.uid, text);
             },
             onSendVoiceMessage: (file, duration) {
-              final chatController = Provider.of<ChatController>(context, listen: false);
-              chatController.sendVoiceMessage(widget.friend.uid, file, duration);
+              Provider.of<ChatController>(context, listen: false)
+                  .sendVoiceMessage(widget.friend.uid, file, duration);
             },
             onSendContact: (contact) {
-              final chatController = Provider.of<ChatController>(context, listen: false);
-              chatController.sendContactMessage(widget.friend.uid, contact);
+              Provider.of<ChatController>(context, listen: false)
+                  .sendContactMessage(widget.friend.uid, contact);
             },
             onSendImage: (file) {
-              final chatController = Provider.of<ChatController>(context, listen: false);
-              chatController.sendImageMessage(widget.friend.uid, file);
+              Provider.of<ChatController>(context, listen: false)
+                  .sendImageMessage(widget.friend.uid, file);
             },
             onSendDocument: (file) {
               final chatController = Provider.of<ChatController>(context, listen: false);
@@ -155,15 +156,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, Map<String, dynamic> messageData, bool isMe) {
-    final time = DateFormat('hh:mm a').format((messageData['timestamp'] as Timestamp).toDate());
-    final type = messageData['type'] ?? 'text';
+  Widget _buildMessageBubble(BuildContext context, Message message, bool isMe) {
+    final time = DateFormat('hh:mm a').format(message.timestamp.toDate());
 
     Widget messageContent;
-    if (type == 'text') {
-      messageContent = Text(messageData['text']);
-    } else if (type == 'voice') {
-      final duration = messageData['duration'] ?? 0;
+    if (message.type == MessageType.text) {
+      messageContent = Text(message.text);
+    } else if (message.type == MessageType.voice) {
+      final duration = message.duration ?? 0;
       final minutes = (duration / 60).floor();
       final seconds = duration % 60;
       final durationString = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
@@ -173,46 +173,50 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.play_arrow),
             onPressed: () async {
-              await _audioPlayer.play(UrlSource(messageData['url']));
+              if (message.url != null) {
+                await _audioPlayer.play(UrlSource(message.url!));
+              }
             },
           ),
           Text(durationString),
         ],
       );
-    } else if (type == 'contact') {
+    } else if (message.type == MessageType.contact) {
       messageContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(messageData['contactName'] ?? 'Unknown Contact', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(messageData['contactNumber'] ?? ''),
+          Text(message.contactName ?? 'Unknown Contact', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(message.contactNumber ?? ''),
         ],
       );
-    } else if (type == 'image') {
-      messageContent = Image.network(messageData['imageUrl']);
-    } else if (type == 'document') {
+    } else if (message.type == MessageType.image) {
+      messageContent = _buildImageMessage(message);
+    } else if (message.type == MessageType.document) {
       messageContent = Row(
         children: [
           const Icon(Icons.insert_drive_file),
           const SizedBox(width: 8),
-          Text(messageData['fileName'] ?? 'Document'),
+          Text(message.fileName ?? 'Document'),
         ],
       );
-    } else if (type == 'audio') {
+    } else if (message.type == MessageType.audio) {
       messageContent = Row(
         children: [
           IconButton(
             icon: const Icon(Icons.play_arrow),
             onPressed: () async {
-              await _audioPlayer.play(UrlSource(messageData['url']));
+              if (message.url != null) {
+                await _audioPlayer.play(UrlSource(message.url!));
+              }
             },
           ),
-          Text(messageData['fileName'] ?? 'Audio'),
+          Text(message.fileName ?? 'Audio'),
         ],
       );
-    } else if (type == 'location') {
+    } else if (message.type == MessageType.location) {
       messageContent = InkWell(
         onTap: () async {
-          final url = 'https://www.google.com/maps/search/?api=1&query=${messageData['latitude']},${messageData['longitude']}';
+          final url = 'https://www.google.com/maps/search/?api=1&query=${message.latitude},${message.longitude}';
           if (await canLaunchUrl(Uri.parse(url))) {
             await launchUrl(Uri.parse(url));
           }
@@ -223,7 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const Text('Location', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Image.network(
-              'https://maps.googleapis.com/maps/api/staticmap?center=${messageData['latitude']},${messageData['longitude']}&zoom=15&size=200x200&key=YOUR_API_KEY',
+              'https://maps.googleapis.com/maps/api/staticmap?center=${message.latitude},${message.longitude}&zoom=15&size=200x200&key=YOUR_API_KEY',
               width: 200,
               height: 200,
               fit: BoxFit.cover,
@@ -259,9 +263,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (isMe) ...[
                       const SizedBox(width: 4),
                       Icon(
-                        Icons.done_all,
+                        message.status == MessageStatus.read ? Icons.done_all : Icons.check,
                         size: 16,
-                        color: messageData['isRead'] ? Colors.blue : Colors.grey,
+                        color: message.status == MessageStatus.read ? Colors.blue : Colors.grey,
                       ),
                     ]
                   ],
@@ -274,4 +278,37 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildImageMessage(Message message) {
+    if (message.localFile != null) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.file(
+            message.localFile!,
+            width: 200,
+            height: 200,
+            fit: BoxFit.cover,
+          ),
+          const CircularProgressIndicator(),
+        ],
+      );
+    } else if (message.imageUrl != null) {
+      return Image.network(
+        message.imageUrl!,
+        width: 200,
+        height: 200,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    } else {
+      return const SizedBox(
+        width: 200,
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+  }
 }

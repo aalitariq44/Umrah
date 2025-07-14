@@ -57,6 +57,9 @@ dependencies:
   url_launcher: ^6.3.0
   firebase_app_check: ^0.3.0+1
   zego_uikit_prebuilt_call: ^4.14.5
+  image: ^4.5.4
+  flutter_image_compress: ^2.3.0
+  mime: ^2.0.0
 
 
 dev_dependencies:

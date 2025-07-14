@@ -72,8 +72,8 @@ class _MessageComposerState extends State<MessageComposer> {
 
   Future<void> _startRecording() async {
     final tempDir = await getTemporaryDirectory();
-    final path = '${tempDir.path}/${const Uuid().v4()}.m4a';
-    await _recorder.startRecorder(toFile: path, codec: Codec.aacMP4);
+    final path = '${tempDir.path}/${const Uuid().v4()}.webm';
+    await _recorder.startRecorder(toFile: path, codec: Codec.opusWebM);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _recordDuration++;
