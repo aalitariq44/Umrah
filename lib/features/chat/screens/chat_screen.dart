@@ -164,7 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (message.type == MessageType.text) {
       messageContent = ClickableText(
         text: message.text,
-        style: const TextStyle(fontSize: 16),
+        style: const TextStyle(fontSize: 16, color: Colors.black),
       );
     } else if (message.type == MessageType.voice) {
       final duration = message.duration ?? 0;
