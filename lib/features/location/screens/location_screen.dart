@@ -318,7 +318,7 @@ class _LocationScreenState extends State<LocationScreen> {
                             } else if (!snapshot.hasData ||
                                 snapshot.data!.isEmpty) {
                               return const Center(
-                                  child: Text('No friends found.'));
+                                  child: Text('لايوجد اصدقاء.'));
                             }
 
                             final friends = snapshot.data!;
