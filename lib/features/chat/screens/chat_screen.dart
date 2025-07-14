@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/clickable_text.dart';
 import '../widgets/document_viewer.dart';
+import '../widgets/location_message_widget.dart';
 import 'image_viewer_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -242,26 +243,9 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     } else if (message.type == MessageType.location) {
-      messageContent = InkWell(
-        onTap: () async {
-          final url = 'https://www.google.com/maps/search/?api=1&query=${message.latitude},${message.longitude}';
-          if (await canLaunchUrl(Uri.parse(url))) {
-            await launchUrl(Uri.parse(url));
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Location', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Image.network(
-              'https://maps.googleapis.com/maps/api/staticmap?center=${message.latitude},${message.longitude}&zoom=15&size=200x200&key=YOUR_API_KEY',
-              width: 200,
-              height: 200,
-              fit: BoxFit.cover,
-            ),
-          ],
-        ),
+      messageContent = LocationMessageWidget(
+        latitude: message.latitude,
+        longitude: message.longitude,
       );
     } else {
       messageContent = const Text('Unsupported message type');

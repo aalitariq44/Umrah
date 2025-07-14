@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 import '../screens/contact_picker_screen.dart';
+import '../../location/controller/location_controller.dart';
 
 class MessageComposer extends StatefulWidget {
   final Function(String) onSendMessage;
@@ -172,8 +173,59 @@ class _MessageComposerState extends State<MessageComposer> {
                   color: Colors.cyan,
                   onTap: () async {
                     Navigator.pop(context);
-                    final position = await _determinePosition();
-                    widget.onSendLocation(position);
+                    try {
+                      // إظهار مؤشر التحميل
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const AlertDialog(
+                          content: Row(
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(width: 20),
+                              Text('جاري الحصول على الموقع...'),
+                            ],
+                          ),
+                        ),
+                      );
+                      
+                      final locationController = LocationController();
+                      final position = await locationController.getCurrentPosition();
+                      
+                      // إخفاء مؤشر التحميل
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                      
+                      widget.onSendLocation(position);
+                      
+                      // إظهار رسالة نجاح
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تم إرسال الموقع بنجاح'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      // إخفاء مؤشر التحميل إذا كان موجوداً
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                      
+                      // إظهار رسالة خطأ
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('خطأ في الحصول على الموقع: $e'),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    }
                   },
                 ),
                 _buildAttachmentMenuItem(
@@ -212,31 +264,6 @@ class _MessageComposerState extends State<MessageComposer> {
         ],
       ),
     );
-  }
-
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition();
   }
 
   @override
