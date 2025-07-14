@@ -158,7 +158,7 @@ class _SafetyTabState extends State<SafetyTab> with TickerProviderStateMixin {
                     ),
                     const SizedBox(width: 10),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'أهلاً بعودتك 👋',
