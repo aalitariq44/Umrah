@@ -44,7 +44,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _emailController.text,
         _passwordController.text,
       );
-      // The AuthWrapper will handle navigation
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen(initialIndex: 3)),
+          (route) => false,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,11 +73,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         title: const Text('إنشاء حساب جديد'),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
                 'إنشاء حساب',
@@ -128,6 +134,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
