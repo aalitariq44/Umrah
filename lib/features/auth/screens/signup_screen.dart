@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myplace/core/widgets/custom_button.dart';
 import 'package:myplace/features/auth/controller/auth_controller.dart';
-import 'package:myplace/features/main_navigation/home_screen.dart';
+import 'package:myplace/features/account/screens/complete_profile_screen.dart';
 import 'package:provider/provider.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -46,7 +46,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen(initialIndex: 3)),
+          MaterialPageRoute(builder: (context) => const CompleteProfileScreen()),
           (route) => false,
         );
       }
