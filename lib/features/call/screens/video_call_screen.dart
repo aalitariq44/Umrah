@@ -19,24 +19,15 @@ class VideoCallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ZegoUIKitPrebuiltCall(
-      appID: ZegoConfig.appID,
-      appSign: ZegoConfig.appSign,
-      callID: callId,
-      userID: currentUser.uid,
-      userName: currentUser.name,
-      config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
-        ..audioVideoViewConfig.useVideoViewAspectFill = true
-        ..bottomMenuBarConfig.buttons = [
-          ZegoMenuBarButtonName.toggleCameraButton,
-          ZegoMenuBarButtonName.switchCameraButton,
-          ZegoMenuBarButtonName.toggleMicrophoneButton,
-          ZegoMenuBarButtonName.switchAudioOutputButton,
-          ZegoMenuBarButtonName.hangUpButton,
-        ]
-        ..topMenuBarConfig.buttons = [
-          ZegoMenuBarButtonName.minimizingButton,
-        ],
+    return SafeArea(
+      child: ZegoUIKitPrebuiltCall(
+        appID: ZegoConfig.appID,
+        appSign: ZegoConfig.appSign,
+        callID: callId,
+        userID: currentUser.uid,
+        userName: currentUser.name.isNotEmpty ? currentUser.name : 'User',
+        config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(),
+      ),
     );
   }
 }

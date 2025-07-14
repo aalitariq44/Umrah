@@ -3,8 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import 'package:myplace/data/models/user_model.dart' as model;
-import 'package:myplace/features/call/screens/voice_call_screen.dart';
-import 'package:myplace/features/call/screens/video_call_screen.dart';
+import 'package:myplace/features/call/screens/simple_call_screen.dart';
 import 'package:myplace/features/call/services/call_permission_manager.dart';
 
 enum CallType { voice, video }
@@ -72,17 +71,12 @@ class CallManager {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => callType == CallType.voice
-                ? VoiceCallScreen(
-                    callId: callId,
-                    currentUser: currentUser,
-                    targetUser: targetUser,
-                  )
-                : VideoCallScreen(
-                    callId: callId,
-                    currentUser: currentUser,
-                    targetUser: targetUser,
-                  ),
+            builder: (context) => SimpleCallScreen(
+              callId: callId,
+              currentUser: currentUser,
+              targetUser: targetUser,
+              isVideoCall: callType == CallType.video,
+            ),
           ),
         );
       }
@@ -140,19 +134,13 @@ class CallManager {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => callType == CallType.voice
-                ? VoiceCallScreen(
-                    callId: callId,
-                    currentUser: currentUser,
-                    targetUser: callerUser,
-                    isIncomingCall: true,
-                  )
-                : VideoCallScreen(
-                    callId: callId,
-                    currentUser: currentUser,
-                    targetUser: callerUser,
-                    isIncomingCall: true,
-                  ),
+            builder: (context) => SimpleCallScreen(
+              callId: callId,
+              currentUser: currentUser,
+              targetUser: callerUser,
+              isVideoCall: callType == CallType.video,
+              isIncomingCall: true,
+            ),
           ),
         );
       }
