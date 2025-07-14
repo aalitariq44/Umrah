@@ -90,6 +90,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
           if (authController.friendRequests.isNotEmpty)
             _buildFriendRequestsSection(context, authController),
+          if (authController.sentFriendRequests.isNotEmpty)
+            _buildSentFriendRequestsSection(context, authController),
           Expanded(
             child: authController.friends.isEmpty
                 ? const Center(child: Text('لا يوجد أصدقاء بعد'))
@@ -155,6 +157,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSentFriendRequestsSection(
+      BuildContext context, AuthController authController) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text('طلبات الصداقة المرسلة',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: authController.sentFriendRequests.length,
+          itemBuilder: (context, index) {
+            final receiver = authController.sentFriendRequests[index];
+            return _buildSentFriendRequestTile(context, receiver);
+          },
+        ),
+        const Divider(),
+      ],
+    );
+  }
+
+  Widget _buildSentFriendRequestTile(
+      BuildContext context, model.User receiver) {
+    return ListTile(
+      leading: const CircleAvatar(
+        child: Icon(Icons.person),
+      ),
+      title: Text('تم إرسال طلب صداقة إلى ${receiver.name}'),
+      trailing: const Text('بانتظار القبول'),
     );
   }
 

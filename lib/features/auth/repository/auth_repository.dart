@@ -219,6 +219,30 @@ class AuthRepository {
     return [];
   }
 
+  Future<List<model.User>> getSentFriendRequests() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      final userDoc =
+          await _firestore.collection('users').doc(currentUser.uid).get();
+      final userData = userDoc.data();
+      if (userData != null && userData['friend_requests_sent'] is List) {
+        final receiverUids =
+            List<String>.from(userData['friend_requests_sent']);
+        if (receiverUids.isEmpty) {
+          return [];
+        }
+        final receiverDocs = await _firestore
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: receiverUids)
+            .get();
+        return receiverDocs.docs
+            .map((doc) => model.User.fromSnap(doc))
+            .toList();
+      }
+    }
+    return [];
+  }
+
   Future<void> updateUserLocation(Position position) async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
