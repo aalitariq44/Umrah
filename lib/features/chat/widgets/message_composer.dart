@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
+import '../screens/contact_picker_screen.dart';
 
 class MessageComposer extends StatefulWidget {
   final Function(String) onSendMessage;
@@ -142,11 +143,14 @@ class _MessageComposerState extends State<MessageComposer> {
                   color: Colors.blue,
                   onTap: () async {
                     Navigator.pop(context);
-                    if (await FlutterContacts.requestPermission()) {
-                      final contact = await FlutterContacts.openExternalPick();
-                      if (contact != null) {
-                        widget.onSendContact(contact);
-                      }
+                    final contact = await Navigator.push<Contact>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactPickerScreen(),
+                      ),
+                    );
+                    if (contact != null) {
+                      widget.onSendContact(contact);
                     }
                   },
                 ),
